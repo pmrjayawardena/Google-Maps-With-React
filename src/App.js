@@ -1,25 +1,73 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import {
+  withGoogleMap,
+  withScriptjs,
+  GoogleMap,
+  Marker,
+  InfoWindow,
+} from "react-google-maps";
+import * as parkData from "./data/skateboard-parks.json";
+import mapStyles from "./mapStyles";
 
-function App() {
+const MapWrapped = withScriptjs(
+  withGoogleMap((props) => {
+    const [selectedPark, setSelectedPark] = useState(null);
+    return (
+      <GoogleMap
+        defaultZoom={10}
+        defaultCenter={{ lat: 45.4211, lng: -75.6903 }}
+        defaultOptions={{ styles: mapStyles }}
+      >
+        {parkData.features.map((park) => (
+          <Marker
+            key={park.properties.PARK_ID}
+            position={{
+              lat: park.geometry.coordinates[1],
+              lng: park.geometry.coordinates[0],
+            }}
+            onClick={() => {
+              setSelectedPark(park);
+            }}
+            icon={{
+              url: `/skateboarding.svg`,
+              scaledSize: new window.google.maps.Size(25, 25),
+            }}
+          />
+        ))}
+
+        {selectedPark && (
+          <InfoWindow
+            onCloseClick={() => {
+              setSelectedPark(null);
+            }}
+            position={{
+              lat: selectedPark.geometry.coordinates[1],
+              lng: selectedPark.geometry.coordinates[0],
+            }}
+          >
+            <div>
+              <h2>{selectedPark.properties.NAME}</h2>
+              <p>{selectedPark.properties.DESCRIPTIO}</p>
+            </div>
+          </InfoWindow>
+        )}
+      </GoogleMap>
+    );
+  })
+);
+
+// const MapWrapped = withScriptjs(withGoogleMap(Map));
+
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div style={{ width: "100vw", height: "100vh" }}>
+      <MapWrapped
+        isMarkerShown
+        googleMapURL={`https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry,drawing,places&key=${process.env.REACT_APP_GOOGLE_KEY}`}
+        loadingElement={<div style={{ height: `100%` }} />}
+        containerElement={<div style={{ height: `100%` }} />}
+        mapElement={<div style={{ height: `100%` }} />}
+      />
     </div>
   );
 }
-
-export default App;
